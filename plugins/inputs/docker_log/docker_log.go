@@ -1,4 +1,4 @@
-package docker_logs
+package docker_log
 
 import (
 	"context"
@@ -18,7 +18,7 @@ import (
 	"github.com/influxdata/telegraf/plugins/inputs"
 )
 
-type DockerLogs struct {
+type DockerLog struct {
 	Endpoint string
 
 	Timeout internal.Duration
@@ -84,22 +84,22 @@ var sampleConfig = `
   # insecure_skip_verify = false
 `
 
-func (d *DockerLogs) Description() string {
+func (d *DockerLog) Description() string {
 	return "Plugin to get docker logs"
 }
 
-func (d *DockerLogs) SampleConfig() string {
+func (d *DockerLog) SampleConfig() string {
 	return sampleConfig
 }
 
-func (d *DockerLogs) Gather(acc telegraf.Accumulator) error {
+func (d *DockerLog) Gather(acc telegraf.Accumulator) error {
 	/*Check to see if any new containers have been created since last time*/
 	d.containerListUpdate(acc)
 	return nil
 }
 
 /*Following few functions have been inherited from telegraf docker input plugin*/
-func (d *DockerLogs) createContainerFilters() error {
+func (d *DockerLog) createContainerFilters() error {
 	filter, err := filter.NewIncludeExcludeFilter(d.ContainerInclude, d.ContainerExclude)
 	if err != nil {
 		return err
@@ -108,7 +108,7 @@ func (d *DockerLogs) createContainerFilters() error {
 	return nil
 }
 
-func (d *DockerLogs) createLabelFilters() error {
+func (d *DockerLog) createLabelFilters() error {
 	filter, err := filter.NewIncludeExcludeFilter(d.LabelInclude, d.LabelExclude)
 	if err != nil {
 		return err
@@ -117,7 +117,7 @@ func (d *DockerLogs) createLabelFilters() error {
 	return nil
 }
 
-func (d *DockerLogs) createContainerStateFilters() error {
+func (d *DockerLog) createContainerStateFilters() error {
 	if len(d.ContainerStateInclude) == 0 && len(d.ContainerStateExclude) == 0 {
 		d.ContainerStateInclude = []string{"running"}
 	}
@@ -129,33 +129,33 @@ func (d *DockerLogs) createContainerStateFilters() error {
 	return nil
 }
 
-func (d *DockerLogs) addToContainerList(containerId string, logReader io.ReadCloser) error {
+func (d *DockerLog) addToContainerList(containerId string, logReader io.ReadCloser) error {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 	d.containerList[containerId] = logReader
 	return nil
 }
 
-func (d *DockerLogs) removeFromContainerList(containerId string) error {
+func (d *DockerLog) removeFromContainerList(containerId string) error {
 	delete(d.containerList, containerId)
 	return nil
 }
 
-func (d *DockerLogs) containerInContainerList(containerId string) bool {
+func (d *DockerLog) containerInContainerList(containerId string) bool {
 	if _, ok := d.containerList[containerId]; ok {
 		return true
 	}
 	return false
 }
 
-func (d *DockerLogs) stopAllReaders() error {
+func (d *DockerLog) stopAllReaders() error {
 	for _, container := range d.containerList {
 		container.Close()
 	}
 	return nil
 }
 
-func (d *DockerLogs) containerListUpdate(acc telegraf.Accumulator) error {
+func (d *DockerLog) containerListUpdate(acc telegraf.Accumulator) error {
 	ctx, cancel := context.WithTimeout(context.Background(), d.Timeout.Duration)
 	defer cancel()
 	if d.client == nil {
@@ -185,7 +185,7 @@ func (d *DockerLogs) containerListUpdate(acc telegraf.Accumulator) error {
 	return nil
 }
 
-func (d *DockerLogs) getContainerLogs(
+func (d *DockerLog) getContainerLogs(
 	container types.Container,
 	acc telegraf.Accumulator,
 ) error {
@@ -238,7 +238,7 @@ func (d *DockerLogs) getContainerLogs(
 	}
 }
 
-func (d *DockerLogs) Start(acc telegraf.Accumulator) error {
+func (d *DockerLog) Start(acc telegraf.Accumulator) error {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 	var c Client
@@ -291,7 +291,7 @@ func (d *DockerLogs) Start(acc telegraf.Accumulator) error {
 	return nil
 }
 
-func (d *DockerLogs) Stop() {
+func (d *DockerLog) Stop() {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 	d.stopAllReaders()
@@ -299,8 +299,8 @@ func (d *DockerLogs) Stop() {
 }
 
 func init() {
-	inputs.Add("docker_logs", func() telegraf.Input {
-		return &DockerLogs{
+	inputs.Add("docker_log", func() telegraf.Input {
+		return &DockerLog{
 			Timeout:        internal.Duration{Duration: time.Second * 5},
 			Endpoint:       defaultEndpoint,
 			newEnvClient:   NewEnvClient,
